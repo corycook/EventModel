@@ -1,0 +1,28 @@
+<html>
+<head>
+<title>Test Event Model</title>
+</head>
+<body>
+    <div></div>
+    <div></div>
+    <button>Test1</button>
+    <button>Test2</button>
+
+    <script src="EventModel.js"></script>
+    <script>
+        var sel = new SelectorEventModel({
+           "div": {
+               set: function(event) {
+                   this.innerHTML = event.data;
+               }
+           },
+           "button": {
+               click: function(event) {
+                   event.model.set(this.innerText);
+               }
+           }
+        });
+        sel.attach(document.body);
+    </script>
+</body>
+</html>
