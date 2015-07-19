@@ -52,3 +52,7 @@ The example above also shows other features:
   1. event.model points to the containing model instance
   2. custom events can be triggered with either the trigger method passing the name of the event or using the property on the model corresponding to the event name (assuming there is no name collision: enumerate, pushmodel, attach, trigger, model, and targets are reserved)
   3. event.data is the value passed to the trigger method for custom events
+
+##Examples
+###combobox.html
+This example shows how to use the SelectorEventModel to create a simple combobox. 
