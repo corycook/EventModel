@@ -1,0 +1,73 @@
+<html>
+<head>
+<title>Test Event Model</title>
+<style>
+    .combo {
+        display: inline-block;
+        position: relative;
+        width: 200px;
+        height: 1.5em;
+    }
+
+    .combo input, .combo select {
+        position: absolute;
+        height: 100%;
+    }
+
+    .combo input {
+        width: 90%;
+        z-index: 10;
+    }
+
+    .combo select {
+        width: 100%;
+        z-index: 0;
+    }
+</style>
+</head>
+<body>
+    <form>
+        <div class="combo">
+            <input />
+            <select>
+                <option>one</option>
+                <option>two</option>
+                <option>three</option>
+                <option>four</option>
+            </select>
+        </div>
+
+        <div class="combo">
+            <input />
+            <select>
+                <option>five</option>
+                <option>six</option>
+                <option>seven</option>
+                <option>eight</option>
+            </select>
+        </div>
+    </form>
+    
+    <script src="EventModel.js"></script>
+    <script>
+        var combo = {
+            input: {
+                set: function(e) { this.value = e.data; }
+            },
+            select: {
+                change: function(e) { e.model.set(this.value); }
+            }
+        }
+        var sel = new SelectorEventModel({
+           ".combo": {
+               initialize: function(event) {
+                   var model = new SelectorEventModel(combo);
+                   model.attach(this);
+               }
+           }
+        });
+        sel.attach(document.body);
+        sel.initialize();
+    </script>
+</body>
+</html>
