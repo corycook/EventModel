@@ -1,34 +1,6 @@
 (function(global) {
     "use strict";
 
-    if (typeof Array.prototype.indexOf === "undefined") {
-        Array.prototype.indexOf = function(obj, start) {
-            for (var i = (start || 0), j = this.length; i < j; i++) {
-                if (this[i] == obj)
-                    return i;
-            }
-            return -1;
-        }
-    }
-    if (typeof Function.prototype.bind === "undefined") {
-        function toArray(arrayLike) {
-            var result = [];
-            if (typeof arrayLike.length === "undefined")
-                return result;
-            for (var i = 0; i < arrayLike.length; i++) {
-                result.push(arrayLike[i]);
-            }
-            return result;
-        }
-        Function.prototype.bind = function(thisArg) {
-            var self = this;
-            var args = Array.prototype.slice.call(arguments, 1);
-            return function() {
-                self.apply(thisArg, args.concat(toArray(arguments)));
-            }
-        }
-    }
-    
     function EventModel(model) {
         this.targets = [];
         this.model = {};
@@ -76,30 +48,21 @@
             this.enumerate(target, function(obj, property) {
                 for (var _handler in property) {
                     var fn = wrapper.bind(self, obj, property[_handler]);
-                    if (typeof obj.addEventListener !== "undefined")
-                        obj.addEventListener(_handler, fn);
-                    else if (typeof obj.attachListener !== "undefined")
-                        obj.attachListener(_handler, fn);
-                    else
-                        obj["on" + _handler] = fn;
+                    obj.addEventListener(_handler, fn);
                 }
             });
             this.targets.push(target);
         };
         this.trigger = function(type, data) {
-            var self = this;
             var event = createEvent(type);
             event.data = data;
             var objects = [];
             for (var i = 0; i < this.targets.length; i++) {
                 this.enumerate(this.targets[i], function(obj, property) {
-                    if (!(type in property) || objects.indexOf(obj) !== -1)
-                        return;
-                    if (typeof obj.dispatchEvent !== "undefined")
+                    if (type in property && objects.indexOf(obj) === -1) {
                         obj.dispatchEvent(event);
-                    else if (("on" + type) in obj)
-                        (obj["on" + type]).call(obj, event);
-                    objects.push(obj);
+                        objects.push(obj);
+                    }
                 });
             }
         }

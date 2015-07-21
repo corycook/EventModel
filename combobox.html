@@ -12,6 +12,8 @@
     .combo input, .combo select {
         position: absolute;
         height: 100%;
+        top: 0;
+        left: 0;
     }
 
     .combo input {
@@ -26,28 +28,26 @@
 </style>
 </head>
 <body>
-    <form>
-        <div class="combo">
-            <input />
-            <select>
-                <option>one</option>
-                <option>two</option>
-                <option>three</option>
-                <option>four</option>
-            </select>
-        </div>
+    <div class="combo">
+        <input />
+        <select>
+            <option>one</option>
+            <option>two</option>
+            <option>three</option>
+            <option>four</option>
+        </select>
+    </div>
 
-        <div class="combo">
-            <input />
-            <select>
-                <option>five</option>
-                <option>six</option>
-                <option>seven</option>
-                <option>eight</option>
-            </select>
-        </div>
-    </form>
-    
+    <div class="combo">
+        <input />
+        <select>
+            <option>five</option>
+            <option>six</option>
+            <option>seven</option>
+            <option>eight</option>
+        </select>
+    </div>
+
     <script src="EventModel.js"></script>
     <script>
         var combo = {
@@ -57,7 +57,7 @@
             select: {
                 change: function(e) { e.model.set(this.value); }
             }
-        }
+        };
         var sel = new SelectorEventModel({
            ".combo": {
                initialize: function(event) {
