@@ -55,4 +55,7 @@ The example above also shows other features:
 
 ##Examples
 ###combobox.html
-This example shows how to use the SelectorEventModel to create a simple combobox. 
+This example shows how to use the SelectorEventModel to create a simple combobox.
+
+###progressbar.html
+This example shows how to use the SelectorEventModel to easily update your progress bar.

@@ -1,0 +1,51 @@
+<html>
+
+<head>
+	<title>Test Event Model</title>
+</head>
+
+<body>
+	<fieldset>
+		<legend>Required</legend>
+		<label for="name">Name</label>
+		<input id="name" required="required" />
+
+		<label for="comment">Comment</label>
+		<input id="comment" required="required" />
+
+		<label for="email">Email</label>
+		<input id="email" required="required" type="email" />
+
+		<label for="date">Date</label>
+		<input id="date" required="required" type="date" />
+	</fieldset>
+	<progress />
+
+	<script src="EventModel.js"></script>
+	<script>
+		var model = new SelectorEventModel({
+			"[required]": {
+				change: function(e) {
+					e.model.update();
+				},
+				valid: function(e) {
+					e.data.req++;
+					if (this.validity.valid)
+						e.data.valid++;
+				}
+			},
+			progress: {
+				update: function(e) {
+					var data = { req: 0, valid: 0 };
+					e.model.valid(data);
+					this.max = data.req;
+					this.value = data.valid;
+				}
+			}
+		});
+		model.attach(document);
+		model.update();
+	</script>
+</body>
+
+</html>
