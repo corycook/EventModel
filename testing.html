@@ -25,16 +25,16 @@
 
 	<script>
 		var model = new edm.Model({
-			"button": {
+			button: {
 				click: function(e, model) {
 					model.add(model.text());
 					e.preventDefault();
 				}
 			},
-			"input": {
+			input: {
 				text: function() { return this.value; },
 			},
-			"ul": {
+			ul: {
 				add: function(e) {
 					var li = document.createElement("li");
 					li.innerText = e.data;

@@ -10,8 +10,10 @@
 			fn(seq[x], x);
 	}
 
-	function Model(viewModel) {
-		this.viewmodel = viewModel;
+	function Model(viewModel, baseElement, parentModel) {
+		this.view = viewModel;
+		this.base = baseElement || document;
+		this.parent = parentModel || null;
 	}
 
 	(function () {
@@ -28,63 +30,68 @@
 
 		this.bind = function () {
 			var model = this;
-			forEach(this.viewmodel, function (item, selector) {
-				if (selector.indexOf(";") > -1) {
-					var s = selector.split(";");
-					forEach(document.querySelectorAll(s[0]), function (root) {
-						forEach(item, function (handler, action) {
-							root.addEventListener(action, delegate.bind(root, s[1], handler, model));
-							if (!(action in model))
-								model[action] = model.trigger.bind(model, action);
-						});
+			forEach(model.view, function (item, selector) {
+				if (item instanceof Model) {
+					forEach(model.base.querySelectorAll(selector), function (element) {
+						(new Model(item.view, element, model)).bind();
 					});
 				} else {
-					forEach(document.querySelectorAll(selector), function (element) {
-						forEach(item, function (handler, action) {
-							element.addEventListener(action, wrapper.bind(element, handler, model));
-							if (!(action in model))
-								model[action] = model.trigger.bind(model, action);
+					if (selector.indexOf(";") > -1) {
+						var s = selector.split(";");
+						forEach(model.base.querySelectorAll(s[0]), function (root) {
+							forEach(item, function (handler, action) {
+								root.addEventListener(action, delegate.bind(root, s[1], handler, model));
+								if (!(action in model))
+									model[action] = model.trigger.bind(model, action);
+							});
 						});
-					});
+					} else {
+						forEach(model.base.querySelectorAll(selector), function (element) {
+							forEach(item, function (handler, action) {
+								element.addEventListener(action, wrapper.bind(element, handler, model));
+								if (!(action in model))
+									model[action] = model.trigger.bind(model, action);
+							});
+						});
+					}
 				}
 			});
 		};
 
 		this.trigger = function (name, data) {
+			var model = this;
 			var e = new Event(name, { bubbles: true, cancelable: true });
 			e.data = data;
 			var triggered = [];
 			var results = [];
-			forEach(this.viewmodel, function (item, selector) {
+			forEach(model.view, function (item, selector) {
 				if (!(name in item)) return;
 				if (selector.indexOf(";") > -1) {
 					var s = selector.split(";");
-					forEach(document.querySelectorAll(s[0]), function (root) {
+					forEach(model.base.querySelectorAll(s[0]), function (root) {
 						forEach(root.querySelectorAll(s[1]), function (element) {
 							if (triggered.indexOf(element) > -1) return;
 							e.result = null;
 							element.dispatchEvent(e);
-							if (e.result)
-								results.push(e.result);
+							results.push(e.result);
 							triggered.push(element);
 						});
 					});
 				} else {
-					forEach(document.querySelectorAll(selector), function (element) {
+					forEach(model.base.querySelectorAll(selector), function (element) {
 						if (triggered.indexOf(element) > -1) return;
 						e.result = null;
 						element.dispatchEvent(e);
-						if (e.result)
-							results.push(e.result);
+						results.push(e.result);
 						triggered.push(element);
 					});
 				}
 			});
-			if (results.length > 1)
-				return results;
+			if (results.length == 0)
+				return null;
 			else if (results.length == 1)
 				return results[0];
-			return null;
+			return results;
 		}
 
 	}).call(Model.prototype)

@@ -5,39 +5,65 @@
 </head>
 
 <body>
-	<fieldset>
-		<legend>Required</legend>
-		<label for="name">Name</label>
-		<input id="name" required="required" />
+	<form>
+		<fieldset>
+			<legend>Info</legend>
+			<label for="fname">First Name</label>
+			<input name="fname" required />
 
-		<label for="comment">Comment</label>
-		<input id="comment" required="required" />
+			<label for="lname">Last Name</label>
+			<input name="lname" required />
 
-		<label for="email">Email</label>
-		<input id="email" required="required" type="email" />
+			<label for="email">Email</label>
+			<input name="email" type="email" required />
 
-		<label for="date">Date</label>
-		<input id="date" required="required" type="date" />
-	</fieldset>
-	<progress />
+			<progress max="1" value="0" />
+		</fieldset>
+		<fieldset>
+			<legend>Additional Info</legend>
 
-	<script src="EventModel.js"></script>
+			<label for="comment">Comment</label>
+			<input name="comment" required />
+
+			<label for="date">Date</label>
+			<input name="date" type="date" required />
+
+			<progress max="1" value="0" />
+		</fieldset>
+		<button>Submit</button>
+	</form>
+
+	<script src="eventmodel.js"></script>
 	<script>
-		var model = new SelectorEventModel({
-			"[required]": {
-				change: function(e) { e.model.update(); },
-				valid: function(e) { return this.validity.valid; }
+		var model = new edm.Model({
+			fieldset: new edm.Model({
+				"[required]": {
+					change: function(e, model) { model.update(); },
+					valid: function() { return this.validity.valid; }
+				},
+				progress: {
+					update: function(e, model) {
+						var valid = model.valid();
+						this.max = valid.length;
+						this.value = valid.reduce(function (t, x) { return x ? t + 1 : t });
+					}
+				}
+			}),
+			input: {
+				data: function(e) {
+					e.data[this.name] = this.value;
+				}
 			},
-			progress: {
-				update: function(e) {
-					var valid = e.model.valid();
-					this.max = valid.length;
-					this.value = valid.reduce(function (t, x) { return x ? t + 1 : t });
+			form: {
+				submit: function(e, model) {
+					var result = {};
+					model.data(result);
+					document.write(JSON.stringify(result));
+					e.preventDefault();
 				}
 			}
 		});
-		model.attach(document);
-		model.update();
+		model.bind();
 	</script>
 </body>
 

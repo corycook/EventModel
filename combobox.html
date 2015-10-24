@@ -1,32 +1,35 @@
 <html>
+
 <head>
-<title>Test Event Model</title>
-<style>
-    .combo {
-        display: inline-block;
-        position: relative;
-        width: 200px;
-        height: 1.5em;
-    }
-
-    .combo input, .combo select {
-        position: absolute;
-        height: 100%;
-        top: 0;
-        left: 0;
-    }
-
-    .combo input {
-        width: 90%;
-        z-index: 10;
-    }
-
-    .combo select {
-        width: 100%;
-        z-index: 0;
-    }
-</style>
+    <title>Test Event Model</title>
+    <style>
+        .combo {
+            display: inline-block;
+            position: relative;
+            width: 200px;
+            height: 1.5em;
+        }
+        
+        .combo input,
+        .combo select {
+            position: absolute;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+        
+        .combo input {
+            width: 90%;
+            z-index: 10;
+        }
+        
+        .combo select {
+            width: 100%;
+            z-index: 0;
+        }
+    </style>
 </head>
+
 <body>
     <div class="combo">
         <input />
@@ -50,24 +53,23 @@
 
     <script src="EventModel.js"></script>
     <script>
-        var combo = {
-            input: {
-                set: function(e) { this.value = e.data; }
-            },
-            select: {
-                change: function(e) { e.model.set(this.value); }
-            }
-        };
-        var sel = new SelectorEventModel({
-           ".combo": {
-               initialize: function(event) {
-                   var model = new SelectorEventModel(combo);
-                   model.attach(this);
-               }
-           }
+        var model = new edm.Model({
+            ".combo": new edm.Model({
+                "input": {
+                    value: function(e) {
+                        this.value = e.data;
+                    }
+                },
+                "select": {
+                    change: function(e, model) {
+                        console.log(model);
+                        model.value(this.value);
+                    }
+                }
+            })
         });
-        sel.attach(document.body);
-        sel.initialize();
+        model.bind();
     </script>
 </body>
+
 </html>
