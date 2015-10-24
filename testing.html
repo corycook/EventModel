@@ -1,0 +1,54 @@
+<html>
+
+<head>
+	<title>Test Event Model</title>
+	<script src="eventmodel.js"></script>
+</head>
+
+<body>
+
+	<form>
+		<input />
+		<input />
+		<button>Add</button>
+
+		<ul>
+			<li>Item 1</li>
+		</ul>
+		
+		<ul>
+			<li>One</li>
+			<li>Two</li>
+			<li>Three</li>
+		</ul>
+	</form>
+
+	<script>
+		var model = new edm.Model({
+			"button": {
+				click: function(e, model) {
+					model.add(model.text());
+					e.preventDefault();
+				}
+			},
+			"input": {
+				text: function() { return this.value; },
+			},
+			"ul": {
+				add: function(e) {
+					var li = document.createElement("li");
+					li.innerText = e.data;
+					this.appendChild(li);
+				}
+			},
+			"ul;li": {
+				click: function(e, model) {
+					this.parentElement.removeChild(this);
+				}
+			}
+		});
+		model.bind();
+	</script>
+</body>
+
+</html>

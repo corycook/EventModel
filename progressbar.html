@@ -25,21 +25,14 @@
 	<script>
 		var model = new SelectorEventModel({
 			"[required]": {
-				change: function(e) {
-					e.model.update();
-				},
-				valid: function(e) {
-					e.data.req++;
-					if (this.validity.valid)
-						e.data.valid++;
-				}
+				change: function(e) { e.model.update(); },
+				valid: function(e) { return this.validity.valid; }
 			},
 			progress: {
 				update: function(e) {
-					var data = { req: 0, valid: 0 };
-					e.model.valid(data);
-					this.max = data.req;
-					this.value = data.valid;
+					var valid = e.model.valid();
+					this.max = valid.length;
+					this.value = valid.reduce(function (t, x) { return x ? t + 1 : t });
 				}
 			}
 		});
