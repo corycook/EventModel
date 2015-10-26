@@ -1,0 +1,66 @@
+<html>
+
+<head>
+	<title>Test Event Model</title>
+	<script src="eventmodel.js"></script>
+</head>
+
+<body>
+
+	<div class="addlist">
+		<input />
+		<button value="add">Add</button>
+		<button value="remove">Archive</button>
+		<ul>
+		</ul>
+	</div>
+
+	<div class="addlist">
+		<input />
+		<button value="add">Add</button>
+		<button value="remove">Archive</button>
+		<ul>
+		</ul>
+	</div>
+
+	<script>
+		var model = new EventModel({
+			".addlist": new EventModel({
+				"[value=add]": {
+					click: function(e, model) {
+						model.add(model.text());
+						e.preventDefault();
+					}
+				},
+				"[value=remove]": {
+					click: function(e, model) {
+						model.remove();
+					}
+				},
+				"input": {
+					text: function() { return this.value; },
+				},
+				"ul": {
+					add: function(e) {
+						var li = document.createElement("li");
+						var check = document.createElement("input");
+						check.type = "checkbox";
+						li.appendChild(check);
+						var txt = document.createTextNode(e.data);
+						li.appendChild(txt);
+						this.appendChild(li);
+					}
+				},
+				"ul;li > input": {
+					remove: function() {
+						if (this.checked)
+							this.parentElement.remove();
+					}
+				}
+			})
+		});
+		model.bind();
+	</script>
+</body>
+
+</html>

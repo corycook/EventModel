@@ -1,6 +1,6 @@
 "use strict";
 
-(function (edm) {
+(function (em, global) {
 
 	function forEach(seq, fn) {
 		if ("length" in seq)
@@ -10,7 +10,7 @@
 			fn(seq[x], x);
 	}
 
-	function Model(viewModel, baseElement, parentModel) {
+	function EventModel(viewModel, baseElement, parentModel) {
 		this.view = viewModel;
 		this.base = baseElement || document;
 		this.parent = parentModel || null;
@@ -31,9 +31,9 @@
 		this.bind = function () {
 			var model = this;
 			forEach(model.view, function (item, selector) {
-				if (item instanceof Model) {
+				if (item instanceof EventModel) {
 					forEach(model.base.querySelectorAll(selector), function (element) {
-						(new Model(item.view, element, model)).bind();
+						(new EventModel(item.view, element, model)).bind();
 					});
 				} else {
 					if (selector.indexOf(";") > -1) {
@@ -94,8 +94,8 @@
 			return results;
 		}
 
-	}).call(Model.prototype)
+	}).call(EventModel.prototype)
 
-	edm.Model = Model;
+	global.EventModel = EventModel;
 
-} (window.edm = {}));
+} (window.em, window));
