@@ -28,6 +28,7 @@
 			".addlist": new EventModel({
 				"[value=add]": {
 					click: function(e, model) {
+						console.log(model.text());
 						model.add(model.text());
 						e.preventDefault();
 					}
@@ -38,7 +39,7 @@
 					}
 				},
 				"input": {
-					text: function() { return this.value; },
+					text: function() { return this.value; }
 				},
 				"ul": {
 					add: function(e) {
@@ -53,8 +54,10 @@
 				},
 				"ul;li > input": {
 					remove: function() {
-						if (this.checked)
-							this.parentElement.remove();
+						if (this.checked) {
+							var li = this.parentElement;
+							li.parentElement.removeChild(li);
+						}
 					}
 				}
 			})

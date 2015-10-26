@@ -17,6 +17,31 @@
 	}
 
 	(function () {
+		
+		function createEvent(name, init) {
+			try {
+				return new Event(name, init);
+			} catch(e) {
+				var event = document.createEvent('Event');
+				event.initEvent(name, init.bubbles || false, init.cancelable || false);
+				return event;
+			}
+		}
+		
+		function Dispatcher(event) {
+			this.event = event;
+			this.triggered = [];
+			this.results = [];
+		}
+		
+		Dispatcher.prototype.on = function(element) {
+			if (this.triggered.indexOf(element) > -1) return;
+			delete this.event.result;
+			element.dispatchEvent(this.event);
+			if (typeof this.event.result !== 'undefined')
+				this.results.push(this.event.result);
+			this.triggered.push(element);
+		}
 
 		function wrapper(handler, model, event) {
 			event.result = handler.call(this, event, model);
@@ -60,38 +85,25 @@
 
 		this.trigger = function (name, data) {
 			var model = this;
-			var e = new Event(name, { bubbles: true, cancelable: true });
+			var e = createEvent(name, { bubbles: true, cancelable: true });
 			e.data = data;
-			var triggered = [];
-			var results = [];
+			var dispatcher = new Dispatcher(e);
 			forEach(model.view, function (item, selector) {
 				if (!(name in item)) return;
 				if (selector.indexOf(";") > -1) {
 					var s = selector.split(";");
 					forEach(model.base.querySelectorAll(s[0]), function (root) {
 						forEach(root.querySelectorAll(s[1]), function (element) {
-							if (triggered.indexOf(element) > -1) return;
-							e.result = null;
-							element.dispatchEvent(e);
-							results.push(e.result);
-							triggered.push(element);
+							dispatcher.on(element);
 						});
 					});
 				} else {
 					forEach(model.base.querySelectorAll(selector), function (element) {
-						if (triggered.indexOf(element) > -1) return;
-						e.result = null;
-						element.dispatchEvent(e);
-						results.push(e.result);
-						triggered.push(element);
+						dispatcher.on(element);
 					});
 				}
 			});
-			if (results.length == 0)
-				return null;
-			else if (results.length == 1)
-				return results[0];
-			return results;
+			return dispatcher.results;
 		}
 
 	}).call(EventModel.prototype)
