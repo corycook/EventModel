@@ -11,15 +11,25 @@
 		<input />
 		<button value="add">Add</button>
 		<button value="remove">Archive</button>
-		<ul>
-		</ul>
+		<button value="sort">Sort</button>
+		<ul> </ul>
 	</div>
 
 	<div class="addlist">
 		<input />
 		<button value="add">Add</button>
+		<button value="sort">Sort</button>
+		<ul> </ul>
+	</div>
+
+	<div class="addlist">
 		<button value="remove">Archive</button>
+		<button value="sort">Sort</button>
 		<ul>
+			<li><input type="checkbox" />Starfruit </li>
+			<li><input type="checkbox" />Apple </li>
+			<li><input type="checkbox" />Pear </li>
+			<li><input type="checkbox" />Banana </li>
 		</ul>
 	</div>
 
@@ -27,22 +37,20 @@
 		var model = new EventModel({
 			".addlist": new EventModel({
 				"[value=add]": {
-					click: function(e, model) {
-						console.log(model.text());
-						model.add(model.text());
-						e.preventDefault();
-					}
+					click: function(e, model) { model.add(model.text()); }
 				},
 				"[value=remove]": {
-					click: function(e, model) {
-						model.remove();
-					}
+					click: function(e, model) { model.remove(); }
+				},
+				"[value=sort]": {
+					click: function(e, model) { model.sort(); }
 				},
 				"input": {
-					text: function() { return this.value; }
+					text: function() { return this.value; },
+					add: function() { this.value = ''; }
 				},
 				"ul": {
-					add: function(e) {
+					add: function(e, model) {
 						var li = document.createElement("li");
 						var check = document.createElement("input");
 						check.type = "checkbox";
@@ -50,14 +58,23 @@
 						var txt = document.createTextNode(e.data);
 						li.appendChild(txt);
 						this.appendChild(li);
+					},
+					sort: function(e) {
+						var arr = Array.prototype.slice.call(this.children);
+						var sorted = arr.sort(function(a, b) { return a.textContent < b.textContent ? -1 : 1; });
+						for (var i in sorted)
+							this.appendChild(sorted[i]);
 					}
 				},
-				"ul;li > input": {
+				"ul;input": {
 					remove: function() {
 						if (this.checked) {
 							var li = this.parentElement;
 							li.parentElement.removeChild(li);
 						}
+					},
+					click: function() {
+						this.parentElement.style.textDecoration = this.checked ? "line-through" : "none";
 					}
 				}
 			})
