@@ -38,14 +38,14 @@
 				this.results.push(this.event.result);
 			this.triggered.push(element);
 		}
-		
-		this.bubbles = function(value) {
+
+		this.bubbles = function (value) {
 			this.event = createEvent(this.name, { bubbles: value, cancelable: true });
 			this.event.data = this.data;
 		}
 
 	}).call(Dispatcher.prototype);
-	
+
 	function EventModel(viewModel, baseElement, parentModel) {
 		this.view = viewModel;
 		this.base = baseElement || document;
@@ -58,23 +58,45 @@
 			event.result = handler.call(this, event, model);
 		}
 
-		function delegate(handler, model, event) {
-			event.result = handler.call(event.target, event, model);
+		function delegate(query, handler, model, event) {
+			if (Array.prototype.slice.call(this.querySelectorAll(query)).indexOf(event.target) > -1)
+				event.result = handler.call(event.target, event, model);
+		}
+
+		function subModel(item, selector) {
+			if (selector.indexOf(";") > -1) {
+				var s = selector.split(";");
+				forEach(model.base.querySelectorAll(s[0]), function (element) {
+					var observer = new MutationObserver(function (mutations) {
+						forEach(mutations, function (record) {
+							if (record.type == "childList" && record.addedNodes.length > 0) {
+								forEach(record.addedNodes, function (node) {
+									if (Array.prototype.slice.call(element.querySelectorAll(s[1])).indexOf(node) > -1)
+										(new EventModel(item.view, node, model)).bind();
+								});
+							}
+						})
+					});
+					observer.observe(element, { attributes: false, childList: true, characterData: false });
+				});
+			} else {
+				forEach(model.base.querySelectorAll(selector), function (element) {
+					(new EventModel(item.view, element, model)).bind();
+				});
+			}
 		}
 
 		this.bind = function () {
 			var model = this;
 			forEach(model.view, function (item, selector) {
 				if (item instanceof EventModel) {
-					forEach(model.base.querySelectorAll(selector), function (element) {
-						(new EventModel(item.view, element, model)).bind();
-					});
+					subModel(item, selector);
 				} else {
 					if (selector.indexOf(";") > -1) {
 						var s = selector.split(";");
 						forEach(model.base.querySelectorAll(s[0]), function (root) {
 							forEach(item, function (handler, action) {
-								root.addEventListener(action, delegate.bind(root, handler, model));
+								root.addEventListener(action, delegate.bind(root, s[1], handler, model), true);
 								if (!(action in model))
 									model[action] = model.trigger.bind(model, action);
 							});

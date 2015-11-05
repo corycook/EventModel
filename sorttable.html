@@ -1,0 +1,103 @@
+<html>
+
+<head>
+	<title>Test Event Model</title>
+	<script src="eventmodel.js"></script>
+
+	<link rel="data" href="data.json" />
+
+	<style>
+		th {
+			cursor: pointer;
+		}
+		
+		.current::after {
+			content: '\25BE';
+		}
+	</style>
+</head>
+
+<body>
+
+	<table>
+		<thead>
+			<tr>
+				<th>Id</th>
+				<th>Name</th>
+				<th>Value</th>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table>
+
+	<script>
+		var data = [
+			{ "Id": 1, "Name": "Apple", "Value": "Simple" },
+			{ "Id": 2, "Name": "Banana", "Value": "Complex" },
+			{ "Id": 3, "Name": "Date", "Value": "Refactor" },
+			{ "Id": 4, "Name": "Apple", "Value": "Abstract" },
+			{ "Id": 5, "Name": "Carrot", "Value": "Concrete" },
+			{ "Id": 6, "Name": "Fig", "Value": "Interface" }
+		];
+		
+		function foreach(array, fn) { for (var i in array) fn(array[i], i); }
+		function forall(arraylike, fn) { for (var i = 0; i < arraylike.length; i++) fn(arraylike[i], i); }
+		
+		var model = new EventModel({
+			"tbody": {
+				"bound": function(e, model) {
+					var tbody = this;
+					foreach (data, function(item) {
+						var row = tbody.insertRow();
+						foreach (item, function(value) {
+							var cell = row.insertCell();
+							cell.textContent = value;
+						});
+					});
+				},
+				"sort": function(e, model) {
+					var sorted = Array.prototype.slice.call(this.children).sort(function(a, b) {
+						return a.children[e.data].textContent < b.children[e.data].textContent ? -1 : 1;
+					});
+					for (var i in sorted) this.appendChild(sorted[i]);
+				}
+			},
+			"tbody;tr": new EventModel({
+				"td": {
+					"bound": function(e, model) {
+						console.log(this);
+					}
+				}
+			}),
+			"thead tr": {
+				"click": function(e, model) {
+					model.sort(Array.prototype.slice.call(this.children).indexOf(e.target));
+					model.clear();
+					e.target.classList.add('current');
+				}
+			},
+			"th": {
+				"clear": function(e, model) {
+					this.classList.remove('current');
+				}
+			},
+			"table;td": {
+				"click": function(e, model) {
+					this.innerHTML = "<input value=\"" + this.textContent + "\" />";
+				}
+			},
+			"table;input": {
+				"blur": function(e, model) {
+					this.parentElement.innerHTML = this.value;
+				},
+				"keyup": function(e) {
+					if (e.keyCode == 13) this.blur();
+				}
+			}
+		});
+		model.bind();
+	</script>
+</body>
+
+</html>
