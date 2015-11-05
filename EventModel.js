@@ -63,16 +63,22 @@
 				event.result = handler.call(event.target, event, model);
 		}
 
-		function subModel(item, selector) {
+		function query(element, selector) {
+			return (selector == "base") ? [element] : element.querySelectorAll(selector);
+		}
+
+		function attachSubModel(model, item, selector) {
 			if (selector.indexOf(";") > -1) {
 				var s = selector.split(";");
-				forEach(model.base.querySelectorAll(s[0]), function (element) {
+				forEach(query(model.base, s[0]), function (element) {
 					var observer = new MutationObserver(function (mutations) {
 						forEach(mutations, function (record) {
-							if (record.type == "childList" && record.addedNodes.length > 0) {
+							if (record.addedNodes.length > 0) {
 								forEach(record.addedNodes, function (node) {
-									if (Array.prototype.slice.call(element.querySelectorAll(s[1])).indexOf(node) > -1)
-										(new EventModel(item.view, node, model)).bind();
+									if (node.eventmodel == null && Array.prototype.slice.call(element.querySelectorAll(s[1])).indexOf(node) > -1) {
+										node.eventmodel = new EventModel(item.view, node, model);
+										node.eventmodel.bind();
+									}
 								});
 							}
 						})
@@ -80,38 +86,47 @@
 					observer.observe(element, { attributes: false, childList: true, characterData: false });
 				});
 			} else {
-				forEach(model.base.querySelectorAll(selector), function (element) {
-					(new EventModel(item.view, element, model)).bind();
+				forEach(query(model.base, selector), function (node) {
+					if (node.eventmodel == null) {
+						node.eventmodel = new EventModel(item.view, node, model);
+						node.eventmodel.bind();
+					}
 				});
 			}
 		}
 
-		this.bind = function () {
-			var model = this;
-			forEach(model.view, function (item, selector) {
-				if (item instanceof EventModel) {
-					subModel(item, selector);
-				} else {
-					if (selector.indexOf(";") > -1) {
-						var s = selector.split(";");
-						forEach(model.base.querySelectorAll(s[0]), function (root) {
-							forEach(item, function (handler, action) {
-								root.addEventListener(action, delegate.bind(root, s[1], handler, model), true);
-								if (!(action in model))
-									model[action] = model.trigger.bind(model, action);
-							});
-						});
-					} else {
-						forEach(model.base.querySelectorAll(selector), function (element) {
-							forEach(item, function (handler, action) {
-								element.addEventListener(action, wrapper.bind(element, handler, model));
-								if (!(action in model))
-									model[action] = model.trigger.bind(model, action);
-							});
-						});
-					}
-				}
+		function attachDelegatedHandlers(model, item, selector) {
+			var s = selector.split(";");
+			forEach(query(model.base, s[0]), function (root) {
+				forEach(item, function (handler, action) {
+					root.addEventListener(action, delegate.bind(root, s[1], handler, model), true);
+					if (!(action in model)) model[action] = model.trigger.bind(model, action);
+				});
 			});
+		}
+
+		function attachItem(item, selector) {
+			var model = this;
+
+			if (Array.isArray(item))
+				return forEach(item, function (i) { attachItem.call(model, i, selector); });
+
+			if (item instanceof EventModel)
+				return attachSubModel(model, item, selector);
+
+			if (selector.indexOf(";") > -1)
+				return attachDelegatedHandlers(model, item, selector);
+
+			forEach(query(model.base, selector), function (element) {
+				forEach(item, function (handler, action) {
+					element.addEventListener(action, wrapper.bind(element, handler, model));
+					if (!(action in model)) model[action] = model.trigger.bind(model, action);
+				});
+			});
+		}
+
+		this.bind = function () {
+			forEach(this.view, attachItem.bind(this));
 			this.trigger("bound");
 		};
 
@@ -119,20 +134,21 @@
 			var model = this;
 			var dispatcher = new Dispatcher(name, data);
 			forEach(model.view, function (item, selector) {
-				if (!(name in item)) return;
-				if (selector.indexOf(";") > -1) {
-					dispatcher.bubbles(true);
-					var s = selector.split(";");
-					forEach(model.base.querySelectorAll(s[0]), function (root) {
-						forEach(root.querySelectorAll(s[1]), function (element) {
+				if (name in item || Array.isArray(item) && item.some(function(n) { return name in n; })) {
+					if (selector.indexOf(";") > -1) {
+						dispatcher.bubbles(true);
+						var s = selector.split(";");
+						forEach(query(model.base, s[0]), function (root) {
+							forEach(query(root, s[1]), function (element) {
+								dispatcher.on(element);
+							});
+						});
+					} else {
+						dispatcher.bubbles(false);
+						forEach(query(model.base, selector), function (element) {
 							dispatcher.on(element);
 						});
-					});
-				} else {
-					dispatcher.bubbles(false);
-					forEach(model.base.querySelectorAll(selector), function (element) {
-						dispatcher.on(element);
-					});
+					}
 				}
 			});
 			return dispatcher.results;

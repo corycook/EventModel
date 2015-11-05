@@ -19,6 +19,8 @@
 
 <body>
 
+	<p>The table is bound to the data object. Click on a header to sort the column. Click a cell to edit the contents. Edits are reflected in the data object.</p>
+	
 	<table>
 		<thead>
 			<tr>
@@ -44,59 +46,67 @@
 		function foreach(array, fn) { for (var i in array) fn(array[i], i); }
 		function forall(arraylike, fn) { for (var i = 0; i < arraylike.length; i++) fn(arraylike[i], i); }
 		
-		var model = new EventModel({
+		var m = new EventModel({
 			"tbody": {
-				"bound": function(e, model) {
+				bound: function(e, model) {
 					var tbody = this;
 					foreach (data, function(item) {
 						var row = tbody.insertRow();
+						row.dataitem = item;
 						foreach (item, function(value) {
 							var cell = row.insertCell();
 							cell.textContent = value;
 						});
 					});
 				},
-				"sort": function(e, model) {
+				sort: function(e, model) {
 					var sorted = Array.prototype.slice.call(this.children).sort(function(a, b) {
 						return a.children[e.data].textContent < b.children[e.data].textContent ? -1 : 1;
 					});
 					for (var i in sorted) this.appendChild(sorted[i]);
 				}
 			},
-			"tbody;tr": new EventModel({
-				"td": {
-					"bound": function(e, model) {
-						console.log(this);
-					}
-				}
-			}),
 			"thead tr": {
-				"click": function(e, model) {
+				click: function(e, model) {
 					model.sort(Array.prototype.slice.call(this.children).indexOf(e.target));
 					model.clear();
 					e.target.classList.add('current');
 				}
 			},
 			"th": {
-				"clear": function(e, model) {
-					this.classList.remove('current');
-				}
+				clear: function(e, model) { this.classList.remove('current'); }
 			},
-			"table;td": {
-				"click": function(e, model) {
-					this.innerHTML = "<input value=\"" + this.textContent + "\" />";
-				}
-			},
-			"table;input": {
-				"blur": function(e, model) {
-					this.parentElement.innerHTML = this.value;
+			"tbody;tr": new EventModel({
+				base: {
+					update: function(e, model) {
+						var tr = this;
+						var map = { "0": "Id", "1": "Name", "2": "Value" };
+						var values = model.value();
+						foreach(map, function(key, ix) { tr.dataitem[key] = values[ix]; });
+					}
 				},
-				"keyup": function(e) {
-					if (e.keyCode == 13) this.blur();
+				"td": {
+					click: function() {
+						var input = document.createElement('input');
+						input.value = this.textContent;
+						this.textContent = null;
+						this.appendChild(input);
+						input.focus();
+						input.setSelectionRange(0, input.value.length);
+					},
+					value: function() { return this.textContent; }
+				},
+				"base;input": {
+					blur: function(e, model) { 
+						this.parentElement.innerHTML = this.value; 
+						model.update(); 
+					},
+					keyup: function(e) { if (e.keyCode == 13) this.blur(); }
 				}
-			}
+			})
 		});
-		model.bind();
+		m.bind();
+	
 	</script>
 </body>
 
