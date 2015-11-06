@@ -3,9 +3,6 @@
 <head>
 	<title>Test Event Model</title>
 	<script src="eventmodel.js"></script>
-
-	<link rel="data" href="data.json" />
-
 	<style>
 		th {
 			cursor: pointer;
@@ -19,8 +16,8 @@
 
 <body>
 
-	<p>The table is bound to the data object. Click on a header to sort the column. Click a cell to edit the contents. Edits are reflected in the data object.</p>
-	
+	<p>Click on a header to sort the column. Click a cell to edit the contents.</p>
+
 	<table>
 		<thead>
 			<tr>
@@ -30,83 +27,102 @@
 			</tr>
 		</thead>
 		<tbody>
+			<tr>
+				<td>0</td>
+				<td>Testing</td>
+				<td>Framework</td>
+			</tr>
+			<tr>
+				<td>1</td>
+				<td>Apple</td>
+				<td>Simple</td>
+			</tr>
+			<tr>
+				<td>2</td>
+				<td>Banana</td>
+				<td>Complex</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<table>
+		<thead>
+			<tr>
+				<th>Id</th>
+				<th>Name</th>
+				<th>Value</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>3</td>
+				<td>Date</td>
+				<td>Refactor</td>
+			</tr>
+			<tr>
+				<td>4</td>
+				<td>Apple</td>
+				<td>Abstract</td>
+			</tr>
+			<tr>
+				<td>5</td>
+				<td>Carrot</td>
+				<td>Concrete</td>
+			</tr>
+			<tr>
+				<td>6</td>
+				<td>Fig</td>
+				<td>Interface</td>
+			</tr>
 		</tbody>
 	</table>
 
 	<script>
-		var data = [
-			{ "Id": 1, "Name": "Apple", "Value": "Simple" },
-			{ "Id": 2, "Name": "Banana", "Value": "Complex" },
-			{ "Id": 3, "Name": "Date", "Value": "Refactor" },
-			{ "Id": 4, "Name": "Apple", "Value": "Abstract" },
-			{ "Id": 5, "Name": "Carrot", "Value": "Concrete" },
-			{ "Id": 6, "Name": "Fig", "Value": "Interface" }
-		];
 		
 		function foreach(array, fn) { for (var i in array) fn(array[i], i); }
-		function forall(arraylike, fn) { for (var i = 0; i < arraylike.length; i++) fn(arraylike[i], i); }
 		
 		var m = new EventModel({
-			"tbody": {
-				bound: function(e, model) {
-					var tbody = this;
-					foreach (data, function(item) {
-						var row = tbody.insertRow();
-						row.dataitem = item;
-						foreach (item, function(value) {
-							var cell = row.insertCell();
-							cell.textContent = value;
+			"table": new EventModel({
+				"tbody": {
+					sort: function(e, model) {
+						var sorted = Array.prototype.slice.call(this.children).sort(function(a, b) {
+							return a.children[e.data].textContent < b.children[e.data].textContent ? -1 : 1;
 						});
-					});
-				},
-				sort: function(e, model) {
-					var sorted = Array.prototype.slice.call(this.children).sort(function(a, b) {
-						return a.children[e.data].textContent < b.children[e.data].textContent ? -1 : 1;
-					});
-					for (var i in sorted) this.appendChild(sorted[i]);
-				}
-			},
-			"thead tr": {
-				click: function(e, model) {
-					model.sort(Array.prototype.slice.call(this.children).indexOf(e.target));
-					model.clear();
-					e.target.classList.add('current');
-				}
-			},
-			"th": {
-				clear: function(e, model) { this.classList.remove('current'); }
-			},
-			"tbody;tr": new EventModel({
-				base: {
-					update: function(e, model) {
-						var tr = this;
-						var map = { "0": "Id", "1": "Name", "2": "Value" };
-						var values = model.value();
-						foreach(map, function(key, ix) { tr.dataitem[key] = values[ix]; });
+						for (var i in sorted) this.appendChild(sorted[i]);
 					}
 				},
-				"td": {
-					click: function() {
-						var input = document.createElement('input');
-						input.value = this.textContent;
-						this.textContent = null;
-						this.appendChild(input);
-						input.focus();
-						input.setSelectionRange(0, input.value.length);
-					},
-					value: function() { return this.textContent; }
+				"thead tr": {
+					click: function(e, model) {
+						if (e.target == this) return;
+						model.sort(Array.prototype.slice.call(this.children).indexOf(e.target));
+						model.clear();
+						e.target.classList.add('current');
+					}
 				},
-				"base;input": {
-					blur: function(e, model) { 
-						this.parentElement.innerHTML = this.value; 
-						model.update(); 
+				"th": {
+					clear: function(e, model) { this.classList.remove('current'); }
+				},
+				"tbody;tr": new EventModel({
+					"td": {
+						click: function() {
+							var input = document.createElement('input');
+							input.value = this.textContent;
+							this.textContent = null;
+							this.appendChild(input);
+							input.focus();
+							input.setSelectionRange(0, input.value.length);
+						},
+						value: function() { return this.textContent; }
 					},
-					keyup: function(e) { if (e.keyCode == 13) this.blur(); }
-				}
+					"base;input": {
+						blur: function(e, model) { this.parentElement.innerHTML = this.value; },
+						keyup: function(e) { if (e.keyCode == 13) this.blur(); }
+					}
+				})
 			})
 		});
 		m.bind();
-	
+		
 	</script>
 </body>
 

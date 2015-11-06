@@ -85,14 +85,15 @@
 					});
 					observer.observe(element, { attributes: false, childList: true, characterData: false });
 				});
-			} else {
-				forEach(query(model.base, selector), function (node) {
-					if (node.eventmodel == null) {
-						node.eventmodel = new EventModel(item.view, node, model);
-						node.eventmodel.bind();
-					}
-				});
+				selector = selector.replace(';', ' ');
 			}
+			
+			forEach(query(model.base, selector), function (node) {
+				if (node.eventmodel == null) {
+					node.eventmodel = new EventModel(item.view, node, model);
+					node.eventmodel.bind();
+				}
+			});
 		}
 
 		function attachDelegatedHandlers(model, item, selector) {
