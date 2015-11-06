@@ -1,61 +1,259 @@
-# EventModel
-A JavaScript library to model bind DOM Elements and Event Listeners
+# eventmodel.js
 
-##EventModel
-```javascript
-var model = {
-  object: {
-    click: function(event) {
-      console.log("Item clicked!");
-    }
-  }
-};
+eventmodel.js is an event mapping utility that simplifies event-based behavioral programming of the
+UI in JavaScript.
 
-function targetModel() {
-  this.object = document.getElementById("targetElement");
-};
+## The View Model
 
-var eventModel = new EventModel(model);
+The object passed to the EventModel constructor is the view model. This describes which events are attached to 
+which elements based on event name and CSS query selector syntax.
 
-eventModel.attach(new targetModel());
-```
+### Selectors
 
-The model object properties match properties in the target model. Each property in the model is an event that will be bound to the corresponding object in the target model.
-
-##SelectorEventModel
+Property names on the view model should match the CSS-style query selector of the elements that you wish
+to target for that set of events.
 
 ```javascript
-var model = {
-  "#targetElement": {
-    click: function(event) {
-      event.model.trigger("show", this.value);
-    },
-    change: function (event) {
-      event.model.show(this.value);
-    }
-  },
-  ".output" {
-    show: function(event) {
-      this.innerText = event.data;
-    }
-  }
-};
+function ViewModel() {
+	this['button'] = { /* Event Group */ };
+}
+``` 
 
-var eventModel = new SelectorEventModel(model);
+### Event Groups
 
-eventModel.attach(document);
+The value assigned to these properties are the event groups. The event group describes which events to listen to.
+
+```javascript
+function ViewModel() {
+	this['button'] = {
+		click: function() { /* Event Handler */ }
+	};
+}
 ```
 
-The SelectorEventModel will query the target (anything that implements querySelectorAll) for objects to attach to.
+### Event Handlers
 
-The example above also shows other features:
-  1. event.model points to the containing model instance
-  2. custom events can be triggered with either the trigger method passing the name of the event or using the property on the model corresponding to the event name (assuming there is no name collision: enumerate, pushmodel, attach, trigger, model, and targets are reserved)
-  3. event.data is the value passed to the trigger method for custom events
+The value assigned to the events in the event group are the handler functions.
 
-##Examples
-###combobox.html
-This example shows how to use the SelectorEventModel to create a simple combobox.
+```javascript
+function ViewModel() {
+	this['button'] = {
+		click: function() {
+			document.write("The button was clicked!");
+		}
+	}
+}
+```
 
-###progressbar.html
-This example shows how to use the SelectorEventModel to easily update your progress bar.
+This last example is a complete view model that, when bound, will write "The button was clicked!" to the page when 
+any button on the page is clicked.
+
+The event handlers "this" object is set to the target element of the event.
+
+The event handlers accept two arguments
+1. The Event
+2. The EventModel
+
+```javascript
+function ViewModel() {
+	this['button'] = {
+		click: function(event, model) {
+			/* event is the instance of the Event interface
+			   and model is the EventModel instance that this
+			   handler is bound to 
+			*/
+		}
+	}
+}
+```
+
+In this way two EventModel instances can be bound to the same view model.
+
+```javascript
+function ViewModel() {
+	var data = { 'item': "shared_value" };
+	
+	this['button'] = {
+		click: function(event, model) {
+			console.log(data);
+			console.log(model.data);
+			data.item = data.item + " " + model.data.item;
+		}
+	};
+}
+
+var viewModel = new ViewModel();
+
+var model = new EventModel(viewModel);
+model.data = { 'item': "first" };
+model.bind();
+
+var next_model = new EventModel(viewModel);
+next_model.data = { 'item': "second" };
+next_model.bind();
+```
+
+In this example, each model has its own data property that handlers can access 
+through the model argument and the view model has a data property that all models
+can access directly.
+
+Clicking a button on the page will log:
+```
+{ 'item': "shared_value" }
+{ 'item': "first" }
+{ 'item': "shared_value first" }
+{ 'item': "second" }
+```
+
+## The Base Object
+
+The EventModel has an optional second parameter that denotes the root or base object. 
+This will default to the document object. The base element is usually an HTMLElement; however,
+it can be any object that implements querySelectorAll() accepting a query string and returning 
+an array-like object of EventTargets.
+
+For example, you can bind to only the first form element on the page:
+
+```javascript
+var model = new EventModel({ /* View Model */ }, document.querySelector('form'));
+```
+
+## The Base Selector
+
+Most selectors in the view model are simply CSS-style query selectors; however,
+you can also use the 'base' keyword selector to select the base object of the model.
+
+This will log the document object whenever a click event bubbles up:
+```javascript
+function ViewModel() {
+	this['base'] = {
+		click: function() {
+			console.log(this);
+		}
+	}
+}
+```
+
+## Custom Events
+
+You can attach listeners for DOM events like 'click' and 'keyup;' however, you 
+can also attach listeners for custom events and trigger them from the EventModel.
+
+### Attaching Custom Events
+
+To attach a custom event you simply give a unique identifier as a property name in the Event Group.
+
+```javascript
+function ViewModel() {
+	this.base = {
+		customEventName: function(event, model) {
+			console.log("Custom event triggered!");
+		}
+	}
+}
+```
+
+### Triggering Custom Events
+
+To trigger a custom event you can call the trigger method on the EventModel.
+
+```javascript
+var model = new EventModel(new ViewModel());
+model.bind():
+
+model.trigger('customEventName');
+
+// or the shortcut method
+model.customEventName();
+```
+
+### Event Data
+
+Passing data to and retrieving data from custom events can be done using the trigger method of
+the EventModel.
+
+```javascript
+function ViewModel() {
+	this['input'] = {
+		getdata: function(event, model) {
+			return this.value;
+		},
+		setdata: function(event, model) {
+			this.value = event.data[this.name];
+		}
+	}
+}
+
+var model = new EventModel(new ViewModel());
+model.bind();
+
+var data = model.getdata(); // or model.trigger("getdata");
+model.setdata({ "firstname": "Cory", "lastname": "Cook" }); // or model.trigger("setdata", { ... });
+```
+
+Data will be set to an array containing the values of all inputs on the page and then the
+inputs with name "firstname" and "lastname" will be set to "Cory" and "Cook" respectively. 
+
+Event data is passed by reference so any changes that happen in the handlers will be reflected
+in the original objects. You can use this fact to get output from the event handlers in a different way.
+
+For example, this can simplify form serialization:
+```javascript
+function ViewModel() {
+	this['input'] = {
+		getdata: function(event, model) {
+			event.data[this.name] = this.value;
+		}
+	}
+}
+
+var model = new EventModel(new ViewModel());
+model.bind();
+
+var data = { };
+model.getdata(data); // or model.trigger("getdata", data);
+```
+
+Data will be an object with property names matching the input elements names.
+
+## Sub Models (Components)
+
+Sub Models (Components) are EventModel instances that can take the place of Event Groups in the view model.
+Also called components since they compartmentalize behavior according to target components and their 
+ancestors.
+
+```javascript
+function ViewModel() {
+	
+	function SubViewModel() {
+		this.base = {
+			submit: function(event, model) {
+				var data = { };
+				model.getdata(data);
+				console.log(data);
+				event.preventDefault();
+			}
+		};
+		this['input'] = {
+			getdata: function(event, model) {
+				event.data[this.name] = this.value;
+			}
+		};
+	}
+	
+	this['form'] = new EventModel(new SubViewModel());
+	
+}
+
+var model = new EventModel(new ViewModel());
+model.bind();
+```
+
+Each form on the page will log the form data when the form is submit. 
+Each form is attached to its own model and is separate from the other form models on the page.
+
+## Delegated Handlers
+
+
+
+## Delegated Sub Models

@@ -8,8 +8,12 @@
 			cursor: pointer;
 		}
 		
-		.current::after {
-			content: '\25BE';
+		.asc::after {
+			content: '\25BD';
+		}
+		
+		.desc::after {
+			content: '\25B3';
 		}
 	</style>
 </head>
@@ -86,7 +90,7 @@
 				"tbody": {
 					sort: function(e, model) {
 						var sorted = Array.prototype.slice.call(this.children).sort(function(a, b) {
-							return a.children[e.data].textContent < b.children[e.data].textContent ? -1 : 1;
+							return (a.children[e.data[0]].textContent < b.children[e.data[0]].textContent ? -1 : 1) * e.data[1];
 						});
 						for (var i in sorted) this.appendChild(sorted[i]);
 					}
@@ -94,13 +98,18 @@
 				"thead tr": {
 					click: function(e, model) {
 						if (e.target == this) return;
-						model.sort(Array.prototype.slice.call(this.children).indexOf(e.target));
+						var ix = Array.prototype.slice.call(this.children).indexOf(e.target);
+						var dir = e.target.classList.contains('asc') ? -1 : 1;
 						model.clear();
-						e.target.classList.add('current');
+						model.sort([ix, dir]);
+						e.target.classList.add(dir == 1 ? 'asc' : 'desc');
 					}
 				},
 				"th": {
-					clear: function(e, model) { this.classList.remove('current'); }
+					clear: function(e, model) { 
+						this.classList.remove('asc');
+						this.classList.remove('desc'); 
+					}
 				},
 				"tbody;tr": new EventModel({
 					"td": {
@@ -111,8 +120,7 @@
 							this.appendChild(input);
 							input.focus();
 							input.setSelectionRange(0, input.value.length);
-						},
-						value: function() { return this.textContent; }
+						}
 					},
 					"base;input": {
 						blur: function(e, model) { this.parentElement.innerHTML = this.value; },
