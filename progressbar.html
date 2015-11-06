@@ -35,13 +35,13 @@
 
 	<script src="eventmodel.js"></script>
 	<script>
-		var model = new edm.Model({
-			fieldset: new edm.Model({
+		var model = new EventModel({
+			"fieldset": new EventModel({
 				"[required]": {
 					change: function(e, model) { model.update(); },
 					valid: function() { return this.validity.valid; }
 				},
-				progress: {
+				"progress": {
 					update: function(e, model) {
 						var valid = model.valid();
 						this.max = valid.length;
@@ -49,12 +49,12 @@
 					}
 				}
 			}),
-			input: {
+			"input": {
 				data: function(e) {
 					e.data[this.name] = this.value;
 				}
 			},
-			form: {
+			"form": {
 				submit: function(e, model) {
 					var result = {};
 					model.data(result);
