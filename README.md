@@ -167,6 +167,23 @@ model.trigger('customEventName');
 model.customEventName();
 ```
 
+Be careful in naming your custom events since trigger will trigger across all 
+selections containing that event name. Selection specification may be added 
+later.
+
+Also, trigger will only trigger events that are registered in the view model.
+So, if there is an event handler registered outside of the view model that you
+would like to trigger with EventModel.trigger() then you need to add a placeholder in the
+selector's event group.
+
+```javascript
+function ViewModel() {
+	this['button'] = {
+		click: function() { /* model.click() is now available! */ }
+	}
+}
+```
+
 ### Event Data
 
 Passing data to and retrieving data from custom events can be done using the trigger method of
@@ -252,8 +269,49 @@ model.bind();
 Each form on the page will log the form data when the form is submit. 
 Each form is attached to its own model and is separate from the other form models on the page.
 
+## Sub Models And Event Groups
+
+You can use an array to combine Event Groups and Sub Models for a single selector.
+
+## The Bound Event
+
+The bound event is triggered on the EventModel when EventModel.bind() has completed.
+
+This can be used to do any necessary setup when the model first attaches.
+
+```javascript
+function ViewModel() {
+	this['form'] = [
+		new EventModel({
+			bound: function(event, model) {
+				this.model = model;
+			}
+		}),
+		{
+			getSubModels: function() {
+				return this.model;
+			}
+		}
+	];
+}
+```
+
+Here, getSubModels will return an array of the sub models attached to each of the form elements.
+
 ## Delegated Handlers
 
+All of the event handlers thus far are attached when EventModel.bind() is called. 
+To handle dynamic elements you should use delegated event handlers.
 
+Use a semicolon in the selector to separate two selectors:
+1. The delegated static element that will capture the event
+2. The target element that you are listening for
+
+```javascript
+function ViewModel() {
+	this['tbody;tr'] = {
+	};
+}
+```
 
 ## Delegated Sub Models

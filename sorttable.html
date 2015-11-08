@@ -47,55 +47,39 @@
 				<td>Complex</td>
 			</tr>
 		</tbody>
-	</table>
-
-	<table>
-		<thead>
+		<tfoot>
 			<tr>
-				<th>Id</th>
-				<th>Name</th>
-				<th>Value</th>
+				<td></td>
+				<td></td>
+				<td>
+					<button>Add</button>
+				</td>
 			</tr>
-		</thead>
-		<tbody>
+		</tfoot>
+		<template>
 			<tr>
-				<td>3</td>
-				<td>Date</td>
-				<td>Refactor</td>
+				<td>Item</td>
+				<td>Item</td>
+				<td>Item</td>
 			</tr>
-			<tr>
-				<td>4</td>
-				<td>Apple</td>
-				<td>Abstract</td>
-			</tr>
-			<tr>
-				<td>5</td>
-				<td>Carrot</td>
-				<td>Concrete</td>
-			</tr>
-			<tr>
-				<td>6</td>
-				<td>Fig</td>
-				<td>Interface</td>
-			</tr>
-		</tbody>
+		</template>
 	</table>
 
 	<script>
-		
-		function foreach(array, fn) { for (var i in array) fn(array[i], i); }
-		
 		var m = new EventModel({
-			"table": new EventModel({
-				"tbody": {
+			'table': new EventModel({
+				'tbody': {
 					sort: function(e, model) {
 						var sorted = Array.prototype.slice.call(this.children).sort(function(a, b) {
 							return (a.children[e.data[0]].textContent < b.children[e.data[0]].textContent ? -1 : 1) * e.data[1];
 						});
 						for (var i in sorted) this.appendChild(sorted[i]);
+					},
+					addrow: function(event, model) {
+						this.appendChild(event.data);
 					}
 				},
-				"thead tr": {
+				'thead tr': {
 					click: function(e, model) {
 						if (e.target == this) return;
 						var ix = Array.prototype.slice.call(this.children).indexOf(e.target);
@@ -105,14 +89,14 @@
 						e.target.classList.add(dir == 1 ? 'asc' : 'desc');
 					}
 				},
-				"th": {
+				'th': {
 					clear: function(e, model) { 
 						this.classList.remove('asc');
 						this.classList.remove('desc'); 
 					}
 				},
-				"tbody;tr": new EventModel({
-					"td": {
+				'tbody;tr': new EventModel({
+					'td': {
 						click: function() {
 							var input = document.createElement('input');
 							input.value = this.textContent;
@@ -122,15 +106,24 @@
 							input.setSelectionRange(0, input.value.length);
 						}
 					},
-					"base;input": {
+					'base;input': {
 						blur: function(e, model) { this.parentElement.innerHTML = this.value; },
 						keyup: function(e) { if (e.keyCode == 13) this.blur(); }
 					}
-				})
+				}),
+				'button': {
+					click: function(event, model) {
+						model.addrow(model.newrow()[0]);
+					}
+				},
+				'template': {
+					newrow: function() {
+						return this.content.cloneNode(true);
+					}
+				}
 			})
 		});
 		m.bind();
-		
 	</script>
 </body>
 
