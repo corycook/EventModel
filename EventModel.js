@@ -162,7 +162,11 @@
 					element.addEventListener(action, function (event) {
 						event.result = handler.call(element, event, model);
 					});
-					if (!(action in model)) model[action] = model.trigger.bind(model, action);
+					if (!(action in model)) {
+						model[action] = function (data) {
+							return model.trigger(action, data);
+						}
+					}
 				});
 			});
 		}

@@ -58,72 +58,128 @@
 		</tfoot>
 		<template>
 			<tr>
-				<td>Item</td>
-				<td>Item</td>
-				<td>Item</td>
+				<td>Id</td>
+				<td>Name</td>
+				<td>Value</td>
+			</tr>
+		</template>
+	</table>
+
+
+	<table>
+		<thead>
+			<tr>
+				<th>Id</th>
+				<th>Name</th>
+				<th>Value</th>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+		<tfoot>
+			<tr>
+				<td></td>
+				<td></td>
+				<td>
+					<button>Add</button>
+				</td>
+			</tr>
+		</tfoot>
+		<template>
+			<tr>
+				<td>Id</td>
+				<td>Name</td>
+				<td>Value</td>
 			</tr>
 		</template>
 	</table>
 
 	<script>
-		var m = new EventModel({
-			'table': new EventModel({
-				'tbody': {
-					sort: function(e, model) {
-						var sorted = Array.prototype.slice.call(this.children).sort(function(a, b) {
-							return (a.children[e.data[0]].textContent < b.children[e.data[0]].textContent ? -1 : 1) * e.data[1];
-						});
-						for (var i in sorted) this.appendChild(sorted[i]);
-					},
-					addrow: function(event, model) {
-						this.appendChild(event.data);
-					}
+		function SortTableViewModel() {
+			// Adds sorting functionality to <table>
+			var self = this;
+			
+			function sort(tbody, column, ascending) {
+				var sorted = Array.prototype.slice.call(tbody.children).sort(function(a, b) {
+					return ascending * (a.children[column].textContent < b.children[column].textContent ? -1 : 1);
+				});
+				var block = document.createDocumentFragment();
+				for (var i in sorted) block.appendChild(sorted[i]);
+				tbody.appendChild(block);
+			}
+			
+			self['tbody'] = {
+				sort: function(event, model) {
+					sort(this, event.data[0], event.data[1]);
+				}
+			};
+			self['thead tr'] = {
+				click: function(event, model) {
+					if (event.target == this) return;
+					var ix = Array.prototype.slice.call(this.children).indexOf(event.target);
+					var dir = event.target.classList.contains('asc') ? -1 : 1;
+					model.clear();
+					model.sort([ix, dir]);
+					event.target.classList.add(dir == 1 ? 'asc' : 'desc');
+				}
+			};
+			self['th'] = {
+				clear: function(event, model) {
+					this.classList.remove('asc');
+					this.classList.remove('desc');
+				}
+			};
+		}
+		
+		function EditTableViewModel() {
+			// Adds editing functionality to <table>
+			var self = this;
+			
+			self['base;td'] = {
+				click: function() {
+					var input = document.createElement('input');
+					input.value = this.textContent;
+					this.textContent = null;
+					this.appendChild(input);
+					input.focus();
+					input.setSelectionRange(0, input.value.length);
+				}
+			};
+			self['base;input'] = {
+				blur: function(e, model) {
+					this.parentElement.textContent = this.value;
 				},
-				'thead tr': {
-					click: function(e, model) {
-						if (e.target == this) return;
-						var ix = Array.prototype.slice.call(this.children).indexOf(e.target);
-						var dir = e.target.classList.contains('asc') ? -1 : 1;
-						model.clear();
-						model.sort([ix, dir]);
-						e.target.classList.add(dir == 1 ? 'asc' : 'desc');
-					}
-				},
-				'th': {
-					clear: function(e, model) { 
-						this.classList.remove('asc');
-						this.classList.remove('desc'); 
-					}
-				},
-				'tbody;tr': new EventModel({
-					'td': {
-						click: function() {
-							var input = document.createElement('input');
-							input.value = this.textContent;
-							this.textContent = null;
-							this.appendChild(input);
-							input.focus();
-							input.setSelectionRange(0, input.value.length);
+				keyup: function(e) { 
+					if (e.keyCode == 13) 
+						this.blur(); 
+				}
+			}
+		}
+		
+		var model = new EventModel({
+			'table': [
+				new EventModel(new SortTableViewModel()),
+				new EventModel(new EditTableViewModel()),
+				new EventModel({
+					'tbody': {
+						add: function(event, model) {
+							this.appendChild(event.data);
 						}
 					},
-					'base;input': {
-						blur: function(e, model) { this.parentElement.innerHTML = this.value; },
-						keyup: function(e) { if (e.keyCode == 13) this.blur(); }
+					'tfoot button': {
+						click: function(event, model) {
+							model.add(model.create()[0]);
+						}
+					},
+					'template': {
+						create: function(event, model) {
+							return this.content.cloneNode(true);
+						}
 					}
-				}),
-				'button': {
-					click: function(event, model) {
-						model.addrow(model.newrow()[0]);
-					}
-				},
-				'template': {
-					newrow: function() {
-						return this.content.cloneNode(true);
-					}
-				}
-			})
+				})
+			]
 		});
-		m.bind();
+		model.bind();
 	</script>
 </body>
 

@@ -47,7 +47,11 @@
 				},
 				"input": {
 					text: function() { return this.value; },
-					add: function() { this.value = ''; }
+					add: function() { this.value = ''; },
+					keyup: function(event, model) {
+						if (event.keyCode === 13)
+							model.add(this.value);
+					}
 				},
 				"ul": {
 					add: function(e, model) {
