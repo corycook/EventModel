@@ -35,25 +35,39 @@
 
 	<script src="eventmodel.js"></script>
 	<script>
+		function AutoProgressViewModel() {
+			var self = this;
+			
+			self["[required]"] = {
+				change: function(event, model) { 
+					model.update();
+				}
+			};
+			
+			self["base;[required]:valid"] = {
+				valid: function(event, model) {
+					event.data.required++;
+					event.data.valid++;
+				}
+			};
+			
+			self["base;[required]:invalid"] = {
+				valid: function(event, model) {
+					event.data.required++;
+				}
+			}
+			
+			self.progress = {
+				update: function(event, model) {
+					var data = { required: 0, valid: 0 };
+					model.valid(data);
+					this.max = data.required;
+					this.value = data.valid;
+				}
+			};
+		}
+		
 		var model = new EventModel({
-			"fieldset": new EventModel({
-				"[required]": {
-					change: function(e, model) { model.update(); },
-					valid: function() { return this.validity.valid; }
-				},
-				"progress": {
-					update: function(e, model) {
-						var valid = model.valid();
-						this.max = valid.length;
-						this.value = valid.reduce(function (t, x) { return x ? t + 1 : t });
-					}
-				}
-			}),
-			"input": {
-				data: function(e) {
-					e.data[this.name] = this.value;
-				}
-			},
 			"form": {
 				submit: function(e, model) {
 					var result = {};
@@ -61,7 +75,13 @@
 					document.write(JSON.stringify(result));
 					e.preventDefault();
 				}
-			}
+			},
+			"input": {
+				data: function(e) {
+					e.data[this.name] = this.value;
+				}
+			},
+			"fieldset": new EventModel(new AutoProgressViewModel())
 		});
 		model.bind();
 	</script>

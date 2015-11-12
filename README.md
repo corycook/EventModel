@@ -237,7 +237,7 @@ Data will be an object with property names matching the input elements names.
 
 Sub Models (Components) are EventModel instances that can take the place of Event Groups in the view model.
 Also called components since they compartmentalize behavior according to target components and their 
-ancestors.
+descendants.
 
 ```javascript
 function ViewModel() {
@@ -307,10 +307,20 @@ Use a semicolon in the selector to separate two selectors:
 1. The delegated static element that will capture the event
 2. The target element that you are listening for
 
+For instance, to handle events on a table with dynamically added rows:
+ 
 ```javascript
 function ViewModel() {
-	this['tbody;tr'] = {
-	};
+	this['table;tr'] = { /* Event Group */ };
+}
+```
+
+This will also be necessary for triggering state-dependent event handlers.
+
+```javascript
+function ViewModel() {
+	this['base;input[required]:valid'] = { /* Event Group */ };
+	this['base;input[required]:invalid'] = { /* Event Group */ };
 }
 ```
 
