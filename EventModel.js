@@ -29,7 +29,7 @@
 			foreach(this.listeners, setTimeout);
 		}
 
-	}).call(Timer.prototype = Object.create(EventTarget.prototype));
+	}).call(Timer.prototype);
 
 	function EventModelBinder(parent, model, root, q) {
 		var self = this;
